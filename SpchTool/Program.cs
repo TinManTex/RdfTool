@@ -12,6 +12,14 @@ namespace RdfTool
     internal static class Program
     {
         private const string DefaultHashDumpFileName = "rdf_hash_dump_dictionary.txt";
+        private const string fileType = "rdf";
+
+        class RunSettings
+        {
+            public bool outputHashes = false;
+            public string gameId = "TPP";
+            public string outputPath = @"D:\Github\mgsv-lookup-strings";
+        }//RunSettings
 
         private static void Main(string[] args)
         {
@@ -46,10 +54,36 @@ namespace RdfTool
 
             List<string> UserStrings = new List<string>();
 
-            foreach (var spchPath in args)
+            //deal with args
+            RunSettings runSettings = new RunSettings();
+
+            List<string> files = new List<string>();
+            int idx = 0;
+            if (args[idx].ToLower() == "-outputhashes" || args[idx].ToLower() == "-o")
+            {
+                runSettings.outputHashes = true;
+                runSettings.outputPath = args[idx += 1];
+                runSettings.gameId = args[idx += 1].ToUpper();
+                Console.WriteLine("Adding to file list");
+                for (int i = idx += 1; i < args.Length; i++)
+                {
+                    AddToFiles(files, args[i], fileType);
+                }
+            }
+            else
+            {
+                Console.WriteLine("Adding to file list");
+                foreach (var arg in args)
+                {
+                    AddToFiles(files, arg, "*");
+                }//foreach args
+            }//args
+            Console.WriteLine("Processing file list");
+            foreach (var spchPath in files)
             {
                 if (File.Exists(spchPath))
                 {
+                    Console.WriteLine(spchPath);
                     // Read input file
                     string fileExtension = Path.GetExtension(spchPath);
                     if (fileExtension.Equals(".xml", StringComparison.OrdinalIgnoreCase))
@@ -61,11 +95,18 @@ namespace RdfTool
                     else if (fileExtension.Equals(".rdf", StringComparison.OrdinalIgnoreCase))
                     {
                         RdfFile spch = ReadFromBinary(spchPath, hashManager);
-                        WriteToXml(spch, Path.GetFileNameWithoutExtension(spchPath) + ".rdf.xml");
+                        if (!runSettings.outputHashes)
+                        {
+                            WriteToXml(spch, Path.GetFileNameWithoutExtension(spchPath) + ".rdf.xml");
+                        }
+                        else
+                        {
+                            Dump.DumpInfo.OutputHashes(runSettings.gameId, fileType, runSettings.outputPath, spchPath, spch);
+                        }//if outputhashes
                     }
                     else
                     {
-                        throw new IOException("Unrecognized input type.");
+                        Console.WriteLine($"Unrecognized input type: {fileExtension}");
                     }
                 }
             }
@@ -73,7 +114,26 @@ namespace RdfTool
             // Write hash matches output
             WriteHashMatchesToFile(DefaultHashDumpFileName, hashManager);
             WriteUserStringsToFile(UserStrings);
-        }
+        }//Main
+
+        private static void AddToFiles(List<string> files, string path, string fileType)
+        {
+            if (File.Exists(path))
+            {
+                files.Add(path);
+            }
+            else
+            {
+                if (Directory.Exists(path))
+                {
+                    var dirFiles = Directory.GetFiles(path, $"*.{fileType}", SearchOption.AllDirectories);
+                    foreach (var file in dirFiles)
+                    {
+                        files.Add(file);
+                    }
+                }
+            }
+        }//AddToFiles
 
         public static void WriteToBinary(RdfFile rdf, string path)
         {
