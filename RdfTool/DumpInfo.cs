@@ -36,7 +36,14 @@ namespace Dump
                 hashSets["LabelName"].Add(label.LabelName.HashValue.ToString());
                 foreach (var voiceClip in label.VoiceClips)
                 {
+                    if (voiceClip.IsVariationSet==1)
+                    {
+                        hashSets["VariationSetName"].Add(voiceClip.VoiceId.HashValue.ToString());
+                    }
+                    else
+                    {
                     hashSets["VoiceId"].Add(voiceClip.VoiceId.HashValue.ToString());
+                    }
                 }
             }//foreach labels
 

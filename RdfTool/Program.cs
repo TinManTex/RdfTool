@@ -254,13 +254,51 @@ namespace RdfTool
                 }
             }
         }
-        public static void CollectUserStrings(RdfFile spch, HashManager hashManager, List<string> UserStrings)
+        public static void CollectUserStrings(RdfFile rdf, HashManager hashManager, List<string> UserStrings)
         {
-            foreach (var label in spch.Labels) // Analyze hashes
+            foreach (var dialogueEvent in rdf.DialogueEvents) // Analyze hashes
+            {
+                if (IsUserString(dialogueEvent.StringLiteral, UserStrings, hashManager.Fnv1LookupTable))
+                    UserStrings.Add(dialogueEvent.StringLiteral);
+            }
+            foreach (var voiceType in rdf.VoiceTypes) // Analyze hashes
+            {
+                if (IsUserString(voiceType.StringLiteral, UserStrings, hashManager.Fnv1LookupTable))
+                    UserStrings.Add(voiceType.StringLiteral);
+            }
+            foreach (var label in rdf.Labels) // Analyze hashes
             {
                 if (IsUserString(label.LabelName.StringLiteral, UserStrings, hashManager.StrCode32LookupTable))
                     UserStrings.Add(label.LabelName.StringLiteral);
                 foreach (var voiceClip in label.VoiceClips)
+                {
+                    if (voiceClip.IsVariationSet == 1)
+                    {
+                        if (IsUserString(voiceClip.VoiceId.StringLiteral, UserStrings, hashManager.StrCode32LookupTable))
+                            UserStrings.Add(voiceClip.VoiceId.StringLiteral);
+                    }
+                    else
+                    {
+                        if (IsUserString(voiceClip.VoiceId.StringLiteral, UserStrings, hashManager.Fnv1LookupTable))
+                            UserStrings.Add(voiceClip.VoiceId.StringLiteral);
+                    }
+                }
+            }
+            foreach (var optionalSet in rdf.OptionalSets) // Analyze hashes
+            {
+                if (IsUserString(optionalSet.OptionalSetName.StringLiteral, UserStrings, hashManager.StrCode32LookupTable))
+                    UserStrings.Add(optionalSet.OptionalSetName.StringLiteral);
+                foreach (var optionalLabel in optionalSet.LabelNames)
+                {
+                    if (IsUserString(optionalLabel.StringLiteral, UserStrings, hashManager.Fnv1LookupTable))
+                        UserStrings.Add(optionalLabel.StringLiteral);
+                }
+            }
+            foreach (var variationSet in rdf.VariationSets) // Analyze hashes
+            {
+                if (IsUserString(variationSet.VariationSetName.StringLiteral, UserStrings, hashManager.StrCode32LookupTable))
+                    UserStrings.Add(variationSet.VariationSetName.StringLiteral);
+                foreach (var voiceClip in variationSet.VoiceClips)
                 {
                     if (IsUserString(voiceClip.VoiceId.StringLiteral, UserStrings, hashManager.Fnv1LookupTable))
                         UserStrings.Add(voiceClip.VoiceId.StringLiteral);
