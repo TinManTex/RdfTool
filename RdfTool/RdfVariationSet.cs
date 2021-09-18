@@ -35,29 +35,31 @@ namespace RdfTool
                 voiceClip.Write(writer);
             }
         }
-        public void ReadXml(XmlReader reader)
+        public void ReadXml(XmlReader reader, List<FnvHash> dialogueEvents, List<FnvHash> voiceTypes)
         {
             VariationSetName = new FoxHash();
             VariationSetName.ReadXml(reader, "variationSetName");
+            bool doNodeLoop = true;
+            if (reader.IsEmptyElement)
+                doNodeLoop = false;
             reader.ReadStartElement("variationSet");
-            while (2 > 1)
-            {
+            while (doNodeLoop)
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
                         RdfVoiceClip voiceClip = new RdfVoiceClip();
-                        voiceClip.ReadXml(reader);
+                        voiceClip.ReadXml(reader, dialogueEvents, voiceTypes);
                         VoiceClips.Add(voiceClip);
                         Console.WriteLine($"    {voiceClip.VoiceId.HashValue}");
                         continue;
                     case XmlNodeType.EndElement:
+                        doNodeLoop = false;
                         reader.Read();
                         return;
                 }
-            }
         }
 
-        public void WriteXml(XmlWriter writer)
+        public void WriteXml(XmlWriter writer, List<FnvHash> dialogueEvents, List<FnvHash> voiceTypes)
         {
             writer.WriteStartElement("variationSet");
             VariationSetName.WriteXml(writer, "variationSetName");
@@ -66,7 +68,7 @@ namespace RdfTool
 
             foreach (RdfVoiceClip voiceClip in VoiceClips)
             {
-                voiceClip.WriteXml(writer);
+                voiceClip.WriteXml(writer, dialogueEvents, voiceTypes);
             }
             writer.WriteEndElement();
         }
